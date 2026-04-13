@@ -2,155 +2,194 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Habit Tracker - Focus Série</title>
+    <title>Habit Tracker - Focus Mental</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
             --main-color: #5c67f2; 
             --success-color: #28a745; 
+            --almost-color: #ffeb3b;
             --flame-color: #ff5722; 
             --bg-color: #f4f7f9; 
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); margin: 0; padding: 30px; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: #333; }
+        .layout { display: flex; gap: 20px; max-width: 1300px; margin: 0 auto 30px auto; align-items: flex-start; }
         
-        .layout { display: flex; gap: 30px; max-width: 1300px; margin: 0 auto; align-items: flex-start; }
+        /* COLONNE GAUCHE */
+        .left-col { flex: 0 0 320px; display: flex; flex-direction: column; gap: 20px; }
+        .streak-card { background: white; padding: 40px 20px; border-radius: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); text-align: center; }
+        .flame-container { font-size: 100px; position: relative; display: inline-block; animation: flameFloat 2s infinite ease-in-out; }
+        .streak-number { position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; font-weight: 900; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         
-        /* SECTION GAUCHE : SÉRIE AGRANDIE */
-        .streak-panel { flex: 0 0 320px; }
-        .streak-card { 
-            background: white; 
-            padding: 50px 30px; 
-            border-radius: 30px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            text-align: center;
-            border: 1px solid rgba(255, 87, 34, 0.1);
+        /* Citations à gauche - TAILLE AUGMENTÉE */
+        .quote-box { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); border-left: 6px solid var(--main-color); }
+        .quote-item { 
+            font-style: italic; 
+            font-size: 18px; /* Taille augmentée */
+            font-weight: 600;
+            margin-bottom: 25px; 
+            color: #2d3748; 
+            line-height: 1.4;
+            position: relative;
         }
-        .flame-container { 
-            font-size: 110px; 
-            position: relative; 
-            display: inline-block; 
-            margin-bottom: 20px; 
-            filter: drop-shadow(0 10px 15px rgba(255, 87, 34, 0.3));
-            animation: flameFloat 2s infinite ease-in-out;
-        }
-        .streak-number { 
-            position: absolute; 
-            top: 65%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            font-size: 38px; 
-            font-weight: 900; 
-            color: white; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .streak-label { 
-            font-weight: 800; 
-            color: #444; 
-            text-transform: uppercase; 
-            font-size: 16px; 
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        .record-box { 
-            margin-top: 25px; 
-            font-size: 15px; 
-            color: #666; 
-            background: #fff5f2;
-            padding: 15px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
+        .quote-item::before { content: '"'; color: var(--main-color); font-size: 40px; position: absolute; left: -20px; top: -15px; opacity: 0.2; }
+        .quote-item:last-child { margin-bottom: 0; }
 
-        /* SECTION CENTRE : LISTE */
-        .main-content { flex: 1; background: white; padding: 35px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        h2 { font-size: 28px; font-weight: 800; margin-bottom: 25px; }
-        .input-group { display: flex; gap: 12px; margin-bottom: 30px; }
-        input[type="text"] { flex: 1; padding: 15px; border: 2px solid #edf2f7; border-radius: 15px; outline: none; font-size: 16px; transition: 0.3s; }
-        input[type="text"]:focus { border-color: var(--main-color); background: #fcfcff; }
-        .btn-add { background: var(--main-color); color: white; border: none; width: 50px; border-radius: 15px; cursor: pointer; font-size: 24px; transition: 0.2s; }
-        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(92, 103, 242, 0.4); }
+        /* CENTRE */
+        .main-content { flex: 1; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); min-height: 500px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 25px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 2px solid #edf2f7; border-radius: 12px; font-size: 16px; outline: none; }
+        .btn-add { background: var(--main-color); color: white; border: none; width: 45px; border-radius: 12px; cursor: pointer; font-size: 20px; }
 
-        .habit-item { display: flex; align-items: center; padding: 18px; border-radius: 18px; margin-bottom: 12px; background: #f8fafc; border: 1px solid transparent; transition: 0.3s; }
-        .habit-item.complete { background-color: #f0fff4; border-color: #c6f6d5; }
-        .habit-item input { transform: scale(1.6); margin-right: 20px; accent-color: var(--success-color); }
-        .habit-item span { font-size: 17px; font-weight: 500; }
-        .delete-btn { color: #cbd5e0; cursor: pointer; margin-left: auto; font-size: 20px; transition: 0.2s; }
-        .delete-btn:hover { color: #e53e3e; }
+        .habit-item { display: flex; align-items: center; padding: 15px; border-radius: 15px; margin-bottom: 10px; background: #f8fafc; transition: 0.2s; }
+        .habit-item.complete { background-color: #f0fff4; }
+        .habit-text { flex: 1; font-weight: 500; outline: none; font-size: 16px; }
+        .delete-btn { color: #cbd5e0; cursor: pointer; margin-left: 10px; }
 
-        /* SECTION DROITE */
-        .sidebar { flex: 0 0 280px; display: flex; flex-direction: column; gap: 25px; }
-        .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 15px; }
-        .day-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; border-radius: 8px; background: #f1f5f9; color: #64748b; font-weight: 600; }
+        /* DROITE */
+        .right-col { flex: 0 0 280px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .day-box { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; border-radius: 6px; background: #f1f5f9; font-weight: 600; }
         .day-box.perfect { background: var(--success-color) !important; color: white; }
-        .day-box.today { box-shadow: 0 0 0 3px var(--main-color) inset; }
+        .day-box.almost { background: var(--almost-color) !important; color: #856404; }
 
-        @keyframes flameFloat { 
-            0%, 100% { transform: translateY(0) scale(1); } 
-            50% { transform: translateY(-10px) scale(1.05); } 
-        }
+        #mental-evolution { background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); color: white; text-align: center; }
+        #evolution-rank { font-weight: 900; color: var(--almost-color); text-transform: uppercase; font-size: 12px; letter-spacing: 1px; margin-bottom: 8px; }
+        #evolution-text { font-size: 16px; font-weight: 600; line-height: 1.4; }
+
+        /* PROGRESSION BAS */
+        .progression-footer { max-width: 1300px; margin: 0 auto; background: white; padding: 25px; border-radius: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); text-align: center; }
+        .levels-container { display: flex; justify-content: space-between; margin: 15px 0; }
+        .level-badge { opacity: 0.2; filter: grayscale(1); transition: 0.4s; flex: 1; }
+        .level-badge.active { opacity: 1; filter: grayscale(0); transform: scale(1.1); }
+        .badge-icon { font-size: 30px; display: block; }
+        .badge-name { font-size: 10px; font-weight: 800; margin-top: 5px; }
+        .xp-bar-container { background: #e2e8f0; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 15px; }
+        #xp-fill { background: linear-gradient(90deg, #5c67f2, #a855f7); height: 100%; width: 0%; transition: 0.5s; }
+
+        @keyframes flameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     </style>
 </head>
 <body>
 
 <div class="layout">
-    <div class="streak-panel">
+    <div class="left-col">
         <div class="streak-card">
-            <div class="flame-container">
-                🔥
-                <div id="currentStreak" class="streak-number">0</div>
-            </div>
-            <div class="streak-label">Série Actuelle</div>
-            <div class="record-box">
-                <span>🏆</span> Record : <strong id="maxStreak">0</strong> jours
-            </div>
+            <div class="flame-container">🔥<div id="currentStreak" class="streak-number">0</div></div>
+            <div style="font-weight:800; color:#666; font-size: 12px; letter-spacing: 1px;">SÉRIE ACTUELLE</div>
+            <div style="margin-top:10px; color:#444">🏆 Record : <strong id="maxStreak">0</strong> j</div>
+        </div>
+
+        <div class="quote-box">
+            <div class="quote-item">Ce que tu fais chaque jour compte plus que ce que tu fais de temps en temps.</div>
+            <div class="quote-item">N'attends pas d'être motivé, sois discipliné.</div>
+            <div class="quote-item">La douleur de l'effort est moindre que celle du regret.</div>
         </div>
     </div>
 
     <div class="main-content">
-        <h2>Mes Objectifs</h2>
+        <h2 style="margin-top:0">Mes Objectifs</h2>
         <div class="input-group">
-            <input type="text" id="habitInput" placeholder="Ex: Faire 20 pompes...">
+            <input type="text" id="habitInput" placeholder="Saisir un nouvel objectif...">
             <button class="btn-add" onclick="addHabit()">+</button>
         </div>
         <div id="habitList"></div>
     </div>
 
-    <div class="sidebar">
+    <div class="right-col">
+        <div class="card" id="mental-evolution">
+            <div id="evolution-rank">Chargement...</div>
+            <div id="evolution-text">"Fixe tes objectifs."</div>
+        </div>
         <div class="card">
-            <h3 id="monthName" style="margin:0; text-align:center; font-size: 16px; color: #444;"></h3>
+            <div id="monthName" style="text-align:center; font-weight:800; margin-bottom:10px; font-size:13px; color:#718096"></div>
             <div class="calendar-grid" id="calendarGrid"></div>
         </div>
-
         <div class="card" style="text-align: center;">
-            <h3 style="margin:0 0 15px 0; font-size: 15px;">Discipline Mensuelle</h3>
-            <canvas id="myChart" width="160" height="160"></canvas>
-            <div id="globalPercent" style="font-size: 24px; font-weight: 800; color: var(--main-color); margin-top: 15px;">0%</div>
+            <canvas id="myChart" width="140" height="140"></canvas>
+            <div id="globalPercent" style="font-size: 20px; font-weight: 800; color: var(--main-color); margin-top: 10px;">0%</div>
         </div>
     </div>
+</div>
+
+<div class="progression-footer">
+    <div style="font-weight:800; color:var(--main-color); font-size: 14px;">PUISSANCE TOTALE : <span id="totalXpDisplay">0</span> XP</div>
+    <div class="levels-container">
+        <div class="level-badge" id="lvl-0"><span class="badge-icon">🥉</span><div class="badge-name">BRONZE</div></div>
+        <div class="level-badge" id="lvl-1"><span class="badge-icon">🥈</span><div class="badge-name">ARGENT</div></div>
+        <div class="level-badge" id="lvl-2"><span class="badge-icon">🥇</span><div class="badge-name">OR</div></div>
+        <div class="level-badge" id="lvl-3"><span class="badge-icon">💎</span><div class="badge-name">DIAMANT</div></div>
+        <div class="level-badge" id="lvl-4"><span class="badge-icon">🛡️</span><div class="badge-name">TITAN</div></div>
+        <div class="level-badge" id="lvl-5"><span class="badge-icon">👑</span><div class="badge-name">LÉGENDAIRE</div></div>
+        <div class="level-badge" id="lvl-6"><span class="badge-icon">⚡</span><div class="badge-name">OLYMPIEN</div></div>
+    </div>
+    <div class="xp-bar-container"><div id="xp-fill"></div></div>
+    <div style="margin-top: 15px; font-weight: 600; font-style: italic; color: #94a3b8;">"Sois meilleur que le toi d'hier"</div>
 </div>
 
 <script>
     let habits = JSON.parse(localStorage.getItem('habits')) || [];
     let history = JSON.parse(localStorage.getItem('habitHistory')) || {}; 
-    let myChart;
+    let totalXp = parseInt(localStorage.getItem('totalXp')) || 0;
+    let myChart = null;
+
+    const levels = [0, 100, 350, 800, 1800, 4000, 8000];
+    const levelMessages = [
+        "Le plus dur, c'est de commencer.",
+        "Le mouvement crée l'élan. Continue.",
+        "Tu n'es plus le même qu'hier.",
+        "Ton potentiel commence à briller.",
+        "La discipline est devenue ton armure.",
+        "Tu entres dans l'histoire du tracker.",
+        "Un dieu parmi les hommes. Inarrêtable."
+    ];
+
     const todayKey = new Date().toISOString().split('T')[0];
 
     function addHabit() {
-        const input = document.getElementById('habitInput');
-        if (!input.value.trim()) return;
-        habits.push({ id: Date.now(), text: input.value, done: false });
-        input.value = "";
+        const val = document.getElementById('habitInput').value;
+        if (!val.trim()) return;
+        habits.push({ id: Date.now(), text: val, done: false });
+        document.getElementById('habitInput').value = "";
         saveAndRender();
     }
 
     function toggleHabit(id) {
-        habits = habits.map(h => h.id === id ? {...h, done: !h.done} : h);
+        const h = habits.find(x => x.id === id);
+        h.done = !h.done;
+        totalXp += h.done ? 10 : -10;
+        if (habits.length > 0 && habits.every(x => x.done)) {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            totalXp += 50;
+        }
         updateHistory();
         saveAndRender();
+    }
+
+    function updateHistory() {
+        if (habits.length === 0) { delete history[todayKey]; } 
+        else {
+            const done = habits.filter(x => x.done).length;
+            history[todayKey] = (done / habits.length) * 100;
+        }
+    }
+
+    function renderList() {
+        const container = document.getElementById('habitList');
+        container.innerHTML = habits.map(h => `
+            <div class="habit-item ${h.done ? 'complete' : ''}">
+                <input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHabit(${h.id})">
+                <div class="habit-text" contenteditable="true" onblur="updateText(${h.id}, this.innerText)">${h.text}</div>
+                <span class="delete-btn" onclick="deleteHabit(${h.id})">🗑️</span>
+            </div>
+        `).join('');
+    }
+
+    function updateText(id, txt) {
+        habits = habits.map(h => h.id === id ? {...h, text: txt} : h);
+        localStorage.setItem('habits', JSON.stringify(habits));
     }
 
     function deleteHabit(id) {
@@ -159,101 +198,75 @@
         saveAndRender();
     }
 
-    function updateHistory() {
-        const allDone = habits.length > 0 && habits.every(h => h.done);
-        if (allDone) { history[todayKey] = true; } 
-        else { delete history[todayKey]; }
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = "";
+        const now = new Date();
+        document.getElementById('monthName').innerText = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase();
+        const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        for (let i = 1; i <= days; i++) {
+            const dStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const score = history[dStr] || 0;
+            let cls = score === 100 ? ' perfect' : (score >= 75 ? ' almost' : '');
+            grid.innerHTML += `<div class="day-box${cls}${dStr === todayKey ? ' today' : ''}">${i}</div>`;
+        }
+    }
+
+    function updateChart() {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const now = new Date();
+        const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const perfects = Object.keys(history).filter(k => k.startsWith(prefix) && history[k] === 100).length;
+        document.getElementById('globalPercent').innerText = Math.round((perfects / days) * 100) + "%";
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { datasets: [{ data: [perfects, days - perfects], backgroundColor: ['#28a745', '#f1f5f9'], borderWidth: 0 }] },
+            options: { cutout: '80%', plugins: { legend: { display: false } } }
+        });
     }
 
     function calculateStreaks() {
-        let current = 0;
-        let max = 0;
-        let tempStreak = 0;
-        
-        let checkDate = new Date();
-        if (!history[todayKey]) { checkDate.setDate(checkDate.getDate() - 1); }
+        let cur = 0, max = 0;
+        let d = new Date();
+        if (history[todayKey] < 100) d.setDate(d.getDate() - 1);
+        while (history[d.toISOString().split('T')[0]] === 100) { cur++; d.setDate(d.getDate() - 1); }
+        const dates = Object.keys(history).filter(k => history[k] === 100).sort();
+        let temp = 0, last = null;
+        dates.forEach(str => {
+            let dt = new Date(str);
+            temp = (last && (dt - last) / 86400000 === 1) ? temp + 1 : 1;
+            max = Math.max(max, temp); last = dt;
+        });
+        document.getElementById('currentStreak').innerText = cur;
+        document.getElementById('maxStreak').innerText = Math.max(cur, max);
+    }
 
-        while (history[checkDate.toISOString().split('T')[0]]) {
-            current++;
-            checkDate.setDate(checkDate.getDate() - 1);
-        }
-
-        let dates = Object.keys(history).sort();
-        if (dates.length > 0) {
-            let lastDate = null;
-            dates.forEach(dateStr => {
-                let d = new Date(dateStr);
-                if (lastDate) {
-                    let diff = (d - lastDate) / (1000 * 60 * 60 * 24);
-                    if (diff === 1) { tempStreak++; } 
-                    else { tempStreak = 1; }
-                } else { tempStreak = 1; }
-                if (tempStreak > max) max = tempStreak;
-                lastDate = d;
-            });
-        }
-        document.getElementById('currentStreak').innerText = current;
-        document.getElementById('maxStreak').innerText = max;
+    function updateProgression() {
+        document.getElementById('totalXpDisplay').innerText = totalXp;
+        let currentLvl = 0;
+        levels.forEach((s, i) => {
+            const b = document.getElementById(`lvl-${i}`);
+            if (totalXp >= s) { b.classList.add('active'); currentLvl = i; }
+            else b.classList.remove('active');
+        });
+        const rankNames = ["Bronze", "Argent", "Or", "Diamant", "Titan", "Légendaire", "Olympien"];
+        document.getElementById('evolution-rank').innerText = "RANG : " + rankNames[currentLvl];
+        document.getElementById('evolution-text').innerText = `"${levelMessages[currentLvl]}"`;
+        const next = levels[currentLvl + 1] || levels[currentLvl];
+        const prev = levels[currentLvl];
+        const prog = next === prev ? 100 : ((totalXp - prev) / (next - prev)) * 100;
+        document.getElementById('xp-fill').style.width = prog + "%";
+        localStorage.setItem('totalXp', totalXp);
     }
 
     function saveAndRender() {
         localStorage.setItem('habits', JSON.stringify(habits));
         localStorage.setItem('habitHistory', JSON.stringify(history));
-        renderList();
-        renderCalendar();
-        updateChart();
-        calculateStreaks();
+        renderList(); renderCalendar(); updateChart(); calculateStreaks(); updateProgression();
     }
-
-    function renderList() {
-        const list = document.getElementById('habitList');
-        list.innerHTML = "";
-        habits.forEach(h => {
-            const div = document.createElement('div');
-            div.className = `habit-item ${h.done ? 'complete' : ''}`;
-            div.innerHTML = `
-                <input type="checkbox" ${h.done ? 'checked' : ''} onchange="toggleHabit(${h.id})">
-                <span style="flex:1">${h.text}</span>
-                <span class="delete-btn" onclick="deleteHabit(${h.id})">🗑️</span>
-            `;
-            list.appendChild(div);
-        });
-    }
-
-    function renderCalendar() {
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = "";
-        const now = new Date();
-        document.getElementById('monthName').innerText = now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const dayDiv = document.createElement('div');
-            dayDiv.className = 'day-box' + (history[dateStr] ? ' perfect' : '') + (dateStr === todayKey ? ' today' : '');
-            dayDiv.innerText = i;
-            grid.appendChild(dayDiv);
-        }
-    }
-
-    function updateChart() {
-        const now = new Date();
-        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const perfectDays = Object.keys(history).filter(k => k.startsWith(currentMonthPrefix)).length;
-        const percent = Math.round((perfectDays / daysInMonth) * 100);
-        document.getElementById('globalPercent').innerText = percent + "%";
-
-        if (myChart) myChart.destroy();
-        const ctx = document.getElementById('myChart').getContext('2d');
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: { datasets: [{ data: [perfectDays, daysInMonth - perfectDays], backgroundColor: ['#28a745', '#f1f5f9'], borderWidth: 0 }] },
-            options: { cutout: '85%', plugins: { legend: { display: false } } }
-        });
-    }
-
     saveAndRender();
 </script>
-
 </body>
 </html>
